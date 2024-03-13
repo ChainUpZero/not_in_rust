@@ -60,8 +60,8 @@ fn prime_factors_of(mut number: u64) -> Vec<u64> {
 
 /// This trait represents x^y % m
 trait PowMod<E, M>
-where
-    Self: Copy + Mul<E> + Rem<M>,
+    where
+        Self: Copy + Mul<E> + Rem<M>,
 {
     type Return;
     fn pow_mod(self, exponent: E, modulus: M) -> Self::Return;
@@ -69,8 +69,8 @@ where
 
 /// This trait represents the modular inverse of x^y % m
 trait InversePowMod<E, M>
-where
-    Self: Copy + Mul<E> + Rem<M>,
+    where
+        Self: Copy + Mul<E> + Rem<M>,
 {
     type Return;
     fn inv_pow_mod(self, exponent: E, modulus: M) -> Self::Return;
@@ -104,7 +104,7 @@ impl InversePowMod<u64, u64> for u64 {
         //(0..modulus).filter(|x| (pow_mod * x) % modulus == 1).collect::<Vec<_>>()[0]
 
         // if mod prime, Fermat's little theorem
-        self.pow_mod(p - 2, modulus) % p
+        pow_mod.pow_mod(modulus - 2, modulus)
 
         // Extended Euclidean algorithm
         // let res = self % modulus;
