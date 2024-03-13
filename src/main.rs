@@ -25,11 +25,17 @@ fn is_prime(number: u64) -> bool {
         0..=1 => false,
         2 => true,
         _ => {
-            if number & 1 == 0 { return false; }
+            if number & 1 == 0 {
+                return false;
+            }
             let mut res = true;
             (3..(number as f64).sqrt() as u64 + 1)
                 .step_by(2)
-                .for_each(|x| { if number % x == 0 { res = false } });
+                .for_each(|x| {
+                    if number % x == 0 {
+                        res = false
+                    }
+                });
             res
         }
     }
@@ -37,7 +43,9 @@ fn is_prime(number: u64) -> bool {
 
 /// return prime factors
 fn prime_factors_of(mut number: u64) -> Vec<u64> {
-    if is_prime(number) { return vec![number]; }
+    if is_prime(number) {
+        return vec![number];
+    }
     let mut factors = Vec::new();
     let mut divisor = 2;
     while number > 1 {
@@ -52,8 +60,8 @@ fn prime_factors_of(mut number: u64) -> Vec<u64> {
 
 /// This trait represents x^y % m
 trait PowMod<E, M>
-    where
-        Self: Copy + Mul<E> + Rem<M>,
+where
+    Self: Copy + Mul<E> + Rem<M>,
 {
     type Return;
     fn pow_mod(self, exponent: E, modulus: M) -> Self::Return;
@@ -61,8 +69,8 @@ trait PowMod<E, M>
 
 /// This trait represents the modular inverse of x^y % m
 trait InversePowMod<E, M>
-    where
-        Self: Copy + Mul<E> + Rem<M>,
+where
+    Self: Copy + Mul<E> + Rem<M>,
 {
     type Return;
     fn inv_pow_mod(self, exponent: E, modulus: M) -> Self::Return;
@@ -92,7 +100,25 @@ impl InversePowMod<u64, u64> for u64 {
     type Return = Self;
     fn inv_pow_mod(self, exponent: u64, modulus: u64) -> Self {
         let pow_mod = self.pow_mod(exponent, modulus);
-        (0..modulus).filter(|x| (pow_mod * x) % modulus == 1).collect::<Vec<_>>()[0]
+        // try every element in range (0, modulus-1)
+        //(0..modulus).filter(|x| (pow_mod * x) % modulus == 1).collect::<Vec<_>>()[0]
+
+        // if mod prime, Fermat's little theorem
+        self.pow_mod(p - 2, modulus) % p
+
+        // Extended Euclidean algorithm
+        // let res = self % modulus;
+        // if res == 0 {
+        //     return 0;
+        // }
+        // let (mut lm, mut hm) = (1, 0);
+        // let (mut low, mut high) = (res, modulus);
+        // while low > 1 {
+        //     let r = high / low;
+        //     let (nm, new) = (hm - lm * r, high - low * r);
+        //     (lm, low, hm, high) = (nm, new, lm, low)
+        // }
+        // return lm % n;
     }
 }
 
@@ -100,8 +126,7 @@ impl InversePowMod<u64, u64> for u64 {
 /// (Example, n = 5): http://www.wolframalpha.com/input/?i=integers+mod+5
 fn dft_matrix(n: u64) -> Vec<Vec<u64>> {
     let mut matrix: Vec<Vec<u64>> = vec![vec![0; n as usize]; n as usize];
-    (0..n).for_each(|x| (0..n)
-        .for_each(|y| matrix[x as usize][y as usize] = x * y % n));
+    (0..n).for_each(|x| (0..n).for_each(|y| matrix[x as usize][y as usize] = x * y % n));
     matrix
 }
 
@@ -111,21 +136,31 @@ fn dft_matrix(n: u64) -> Vec<Vec<u64>> {
 ///   M is larger than the value of any element
 fn find_modulus(elements: &[u64]) -> Result<u64, String> {
     let n = elements.len() as u64;
-    if n == 0 { return Err("[NttError]: Attempt to transform nothing".to_string()); }
+    if n == 0 {
+        return Err("[NttError]: Attempt to transform nothing".to_string());
+    }
 
     let max_elem = *elements
-        .iter().max()
+        .iter()
+        .max()
         .expect("[NttError]: Could not define a maximum element.");
     let largest = max(n, max_elem);
     let start = (largest - 1) / n;
 
-    (start..).find(|&x| {
-        let modulus = x * n + 1;
-        modulus > largest && is_prime(modulus)
-    }).map_or_else(
-        || Err("[NttError]: Could not find working modulus for the provided vector."
-            .to_string()),
-        |x| Ok(x * n + 1))
+    (start..)
+        .find(|&x| {
+            let modulus = x * n + 1;
+            modulus > largest && is_prime(modulus)
+        })
+        .map_or_else(
+            || {
+                Err(
+                    "[NttError]: Could not find working modulus for the provided vector."
+                        .to_string(),
+                )
+            },
+            |x| Ok(x * n + 1),
+        )
 }
 
 /// Finds a generator under the given modulus:
@@ -138,16 +173,16 @@ fn find_generator(modulus: u64) -> Result<u64, String> {
     for generator in 1..modulus {
         if prime_factors
             .iter()
-            .map(
-                |factor|
-                    1 != generator.pow_mod(max_value / factor, modulus)
-            )
+            .map(|factor| 1 != generator.pow_mod(max_value / factor, modulus))
             .all(|not_one| not_one)
         {
             return Ok(generator);
         }
     }
-    Err(format!("[NttError]: No generator exists under the modulus `{}`", modulus))
+    Err(format!(
+        "[NttError]: No generator exists under the modulus `{}`",
+        modulus
+    ))
 }
 
 /// Finds the value of omega for the Number-Theoretic Transform under a given modulus M.
@@ -166,21 +201,17 @@ fn ntt(elements: &[u64]) -> Result<Vec<u64>, String> {
     let n = elements.len() as u64;
     let modulus = find_modulus(elements)?;
     let omega = find_primitive_root(n, modulus)?;
-    Ok(
-        dft_matrix(n)
-            .iter()
-            .map(|row| {
-                elements
-                    .iter()
-                    .zip(row)
-                    .map(
-                        |(elem, ij)|
-                            elem * omega.pow_mod(*ij, modulus)
-                    )
-                    .sum::<u64>()
-                    % modulus
-            }).collect::<Vec<u64>>()
-    )
+    Ok(dft_matrix(n)
+        .iter()
+        .map(|row| {
+            elements
+                .iter()
+                .zip(row)
+                .map(|(elem, ij)| elem * omega.pow_mod(*ij, modulus))
+                .sum::<u64>()
+                % modulus
+        })
+        .collect::<Vec<u64>>())
 }
 
 /// Inverse Number-Theoretic Transform
@@ -188,20 +219,16 @@ fn i_ntt(elements: &[u64]) -> Result<Vec<u64>, String> {
     let n = elements.len() as u64;
     let modulus = find_modulus(elements)?;
     let omega = find_primitive_root(n, modulus)?;
-    Ok(
-        dft_matrix(n)
-            .iter()
-            .map(|row| {
-                elements
-                    .iter()
-                    .zip(row)
-                    .map(
-                        |(elem, ij)|
-                            elem * omega.inv_pow_mod(*ij, modulus)
-                    )
-                    .sum::<u64>()
-                    * n.inv_pow_mod(1, modulus)
-                    % modulus
-            }).collect::<Vec<u64>>()
-    )
+    Ok(dft_matrix(n)
+        .iter()
+        .map(|row| {
+            elements
+                .iter()
+                .zip(row)
+                .map(|(elem, ij)| elem * omega.inv_pow_mod(*ij, modulus))
+                .sum::<u64>()
+                * n.inv_pow_mod(1, modulus)
+                % modulus
+        })
+        .collect::<Vec<u64>>())
 }
