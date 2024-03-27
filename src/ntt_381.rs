@@ -35,7 +35,8 @@ pub fn ntt_381(elements: &Vec<Scalar>) -> Vec<Scalar> {
                 .iter()
                 .zip(row)
                 .map(|(elem, ij)|
-                    elem * Scalar::ROOT_OF_UNITY.pow(&[*ij, 0, 0, 0])
+                    elem * Scalar::ROOT_OF_UNITY
+                        .pow(&[*ij * ((u32::MAX as u64 + 1) / n), 0, 0, 0])
                 )
                 .sum::<Scalar>()
         }).collect::<Vec<Scalar>>()
@@ -74,7 +75,8 @@ pub fn i_ntt_381(elements: &Vec<Scalar>) -> Vec<Scalar> {
                 .iter()
                 .zip(row)
                 .map(|(elem, ij)|
-                    elem * Scalar::ROOT_OF_UNITY_INV.pow(&[*ij, 0, 0, 0])
+                    elem * Scalar::ROOT_OF_UNITY_INV
+                        .pow(&[*ij * ((u32::MAX as u64 + 1) / n), 0, 0, 0])
                 )
                 .sum::<Scalar>() * Scalar::from(n).invert().unwrap()
         }).collect::<Vec<Scalar>>()

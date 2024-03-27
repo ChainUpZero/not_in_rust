@@ -189,7 +189,6 @@ pub fn ntt(elements: &[u64]) -> Result<Vec<u64>, String> {
                 .iter()
                 .zip(row)
                 .map(|(elem, ij)| {
-                    // println!("{} * {} ^ {} mod {}= {}", elem, omega, ij ,modulus, elem * omega.inv_pow_mod(*ij, modulus)); 
                     elem * omega.pow_mod(*ij, modulus)
                 })
                 .sum::<u64>()
