@@ -203,7 +203,6 @@ pub fn i_ntt(elements: &[u64]) -> Result<Vec<u64>, String> {
     let n = elements.len() as u64;
     let modulus = find_modulus(elements)?;
     let omega = find_primitive_root(n, modulus)?;
-    // println!("primitive root : {}", omega);
     Ok(dft_matrix(n)
         .iter()
         .map(|row| {
@@ -213,8 +212,7 @@ pub fn i_ntt(elements: &[u64]) -> Result<Vec<u64>, String> {
                 .map(|(elem, ij)| {
                     elem * omega.inv_pow_mod(*ij, modulus)
                 })
-                .sum::<u64>()
-                * n.inv_pow_mod(1, modulus)
+                .sum::<u64>() * n.inv_pow_mod(1, modulus)
                 % modulus
         })
         .collect::<Vec<u64>>())
