@@ -1,5 +1,5 @@
-use scalar::{Scalar};
-use ff::{PrimeField};
+use scalar::Scalar;
+use ff::PrimeField;
 
 pub fn ntt_381(elements: &Vec<Scalar>) -> Vec<Scalar> {
     let n = elements.len() as u64;
