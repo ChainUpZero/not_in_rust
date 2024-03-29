@@ -1,0 +1,25 @@
+[package]
+license = "MIT/Apache-2.0"
+name = "scalar"
+version = "0.8.0"
+edition = "2021"
+
+[dev-dependencies]
+csv = ">= 1.0, < 1.2" # csv 1.2 has MSRV 1.60
+criterion = "0.3"
+hex = "0.4"
+rand_xorshift = "0.3"
+sha2 = "0.9"
+sha3 = "0.9"
+
+[dependencies.ff]
+version = "0.13"
+default-features = false
+
+[dependencies.rand_core]
+version = "0.6"
+default-features = false
+
+[dependencies.subtle]
+version = "2.2.1"
+default-features = false
