@@ -80,19 +80,6 @@ const MODULUS: Scalar = Scalar([
     0x73ed_a753_299d_7d48,
 ]);
 
-/// The modulus as u32 limbs.
-#[cfg(all(feature = "bits", not(target_pointer_width = "64")))]
-const MODULUS_LIMBS_32: [u32; 8] = [
-    0x0000_0001,
-    0xffff_ffff,
-    0xfffe_5bfe,
-    0x53bd_a402,
-    0x09a1_d805,
-    0x3339_d808,
-    0x299d_7d48,
-    0x73ed_a753,
-];
-
 // The number of bits needed to represent the modulus.
 const MODULUS_BITS: u32 = 255;
 
@@ -712,52 +699,6 @@ impl PrimeField for Scalar {
     const DELTA: Self = DELTA;
 }
 
-#[cfg(all(feature = "bits", not(target_pointer_width = "64")))]
-type ReprBits = [u32; 8];
-
-#[cfg(all(feature = "bits", target_pointer_width = "64"))]
-type ReprBits = [u64; 4];
-
-#[cfg(feature = "bits")]
-impl PrimeFieldBits for Scalar {
-    type ReprBits = ReprBits;
-
-    fn to_le_bits(&self) -> FieldBits<Self::ReprBits> {
-        let bytes = self.to_bytes();
-
-        #[cfg(not(target_pointer_width = "64"))]
-        let limbs = [
-            u32::from_le_bytes(bytes[0..4].try_into().unwrap()),
-            u32::from_le_bytes(bytes[4..8].try_into().unwrap()),
-            u32::from_le_bytes(bytes[8..12].try_into().unwrap()),
-            u32::from_le_bytes(bytes[12..16].try_into().unwrap()),
-            u32::from_le_bytes(bytes[16..20].try_into().unwrap()),
-            u32::from_le_bytes(bytes[20..24].try_into().unwrap()),
-            u32::from_le_bytes(bytes[24..28].try_into().unwrap()),
-            u32::from_le_bytes(bytes[28..32].try_into().unwrap()),
-        ];
-
-        #[cfg(target_pointer_width = "64")]
-        let limbs = [
-            u64::from_le_bytes(bytes[0..8].try_into().unwrap()),
-            u64::from_le_bytes(bytes[8..16].try_into().unwrap()),
-            u64::from_le_bytes(bytes[16..24].try_into().unwrap()),
-            u64::from_le_bytes(bytes[24..32].try_into().unwrap()),
-        ];
-
-        FieldBits::new(limbs)
-    }
-
-    fn char_le_bits() -> FieldBits<Self::ReprBits> {
-        #[cfg(not(target_pointer_width = "64"))]
-        {
-            FieldBits::new(MODULUS_LIMBS_32)
-        }
-
-        #[cfg(target_pointer_width = "64")]
-        FieldBits::new(MODULUS.0)
-    }
-}
 
 impl<T> core::iter::Sum<T> for Scalar
 where
@@ -830,22 +771,6 @@ fn test_inv() {
     assert_eq!(inv, INV);
 }
 
-#[cfg(feature = "std")]
-#[test]
-fn test_debug() {
-    assert_eq!(
-        format!("{:?}", Scalar::zero()),
-        "0x0000000000000000000000000000000000000000000000000000000000000000"
-    );
-    assert_eq!(
-        format!("{:?}", Scalar::one()),
-        "0x0000000000000000000000000000000000000000000000000000000000000001"
-    );
-    assert_eq!(
-        format!("{:?}", R2),
-        "0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffe"
-    );
-}
 
 #[test]
 fn test_equality() {
@@ -1259,19 +1184,4 @@ fn test_double() {
     ]);
 
     assert_eq!(a.double(), a + a);
-}
-
-#[cfg(feature = "zeroize")]
-#[test]
-fn test_zeroize() {
-    use zeroize::Zeroize;
-
-    let mut a = Scalar::from_raw([
-        0x1fff_3231_233f_fffd,
-        0x4884_b7fa_0003_4802,
-        0x998c_4fef_ecbc_4ff3,
-        0x1824_b159_acc5_0562,
-    ]);
-    a.zeroize();
-    assert!(bool::from(a.is_zero()));
 }
