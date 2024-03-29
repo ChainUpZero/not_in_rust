@@ -14,5 +14,4 @@ Cargo.lock
 *.pdb
 
 .idea/
-lib/bls12_381/
 .DS_Store/

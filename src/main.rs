@@ -1,4 +1,4 @@
-use bls12_381::Scalar;
+use scalar::Scalar;
 use ff::PrimeField;
 
 mod small_ntt;
